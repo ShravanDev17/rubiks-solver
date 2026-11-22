@@ -1,6 +1,5 @@
 import './style.css';
-
-const Cube = window.Cube;
+import { createViewer } from './viewer.js';
 import {
   FACES,
   FACE_COLORS,
@@ -10,6 +9,8 @@ import {
   toFaceletString,
   fromFaceletString,
 } from './cube.js';
+
+const Cube = window.Cube;
 
 const COLOR_HEX = {
   white: '#ffffff',
@@ -28,6 +29,32 @@ const netEl = document.getElementById('net');
 const messageEl = document.getElementById('message');
 const solutionEl = document.getElementById('solution');
 const solveBtn = document.getElementById('solve');
+
+const viewerSection = document.getElementById('viewer-section');
+const playBtn = document.getElementById('play');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const restartBtn = document.getElementById('restart');
+const speedInput = document.getElementById('speed');
+const stepInfoEl = document.getElementById('step-info');
+
+const viewer = createViewer(document.getElementById('viewer'), updatePlayback);
+viewer.setSpeed(1100 - Number(speedInput.value) * 100);
+
+function updatePlayback() {
+  const { index, total, playing } = viewer.getState();
+  stepInfoEl.textContent = `Step ${index} / ${total}`;
+  playBtn.textContent = playing ? 'Pause' : 'Play';
+  playBtn.disabled = !playing && index >= total;
+  prevBtn.disabled = playing || index === 0;
+  nextBtn.disabled = playing || index >= total;
+  restartBtn.disabled = playing;
+
+  document.querySelectorAll('.move').forEach((el, i) => {
+    el.classList.toggle('done', i < index);
+    el.classList.toggle('upcoming', i === index);
+  });
+}
 
 function countColors() {
   const counts = {};
@@ -92,14 +119,17 @@ function showMessage(text, type) {
 }
 
 function clearOutput() {
+  viewer.pause();
   showMessage('', '');
   solutionEl.innerHTML = '';
+  viewerSection.hidden = true;
 }
 
-function showSolution(moves) {
+function showSolution(moves, facelets) {
   if (moves.length === 0) {
     showMessage('The cube is already solved.', 'success');
     solutionEl.innerHTML = '';
+    viewerSection.hidden = true;
     return;
   }
 
@@ -110,6 +140,9 @@ function showSolution(moves) {
       ${moves.map((m) => `<span class="move">${m}</span>`).join('')}
     </div>
   `;
+
+  viewerSection.hidden = false;
+  viewer.load(facelets, moves);
 }
 
 function render() {
@@ -120,31 +153,45 @@ function render() {
 function solveCube() {
   const result = validateCube(cube);
   if (!result.valid) {
+    clearOutput();
     showMessage(result.errors.join(' '), 'error');
-    solutionEl.innerHTML = '';
     return;
   }
 
   try {
-    const solver = Cube.fromString(toFaceletString(cube));
+    const facelets = toFaceletString(cube);
+    const solver = Cube.fromString(facelets);
     const solution = solver.solve();
 
     if (solution === null || solution === undefined) {
+      clearOutput();
       showMessage('No solution found. Please recheck your colors.', 'error');
-      solutionEl.innerHTML = '';
       return;
     }
 
     const moves = solution.trim() === '' ? [] : solution.trim().split(/\s+/);
-    showSolution(moves);
+    showSolution(moves, facelets);
   } catch (error) {
     console.error(error);
+    clearOutput();
     showMessage('This cube is not solvable. Please recheck your colors.', 'error');
-    solutionEl.innerHTML = '';
   }
 }
 
 solveBtn.addEventListener('click', solveCube);
+
+playBtn.addEventListener('click', () => {
+  if (viewer.getState().playing) viewer.pause();
+  else viewer.play();
+});
+
+prevBtn.addEventListener('click', () => viewer.prev());
+nextBtn.addEventListener('click', () => viewer.next());
+restartBtn.addEventListener('click', () => viewer.restart());
+
+speedInput.addEventListener('input', () => {
+  viewer.setSpeed(1100 - Number(speedInput.value) * 100);
+});
 
 document.getElementById('scramble').addEventListener('click', () => {
   cube = fromFaceletString(Cube.random().asString());

@@ -19,6 +19,21 @@
       </div>
       <div id="message"></div>
       <div id="solution"></div>
+      <div id="viewer-section" hidden>
+        <div id="viewer"></div>
+        <p class="hint">Drag to rotate the view.</p>
+        <div id="controls">
+          <button id="restart">Restart</button>
+          <button id="prev">Prev</button>
+          <button id="play">Play</button>
+          <button id="next">Next</button>
+        </div>
+        <div id="step-info">Step 0 / 0</div>
+        <label class="speed">
+          Speed
+          <input id="speed" type="range" min="1" max="10" value="6" />
+        </label>
+      </div>
     </div>
     <script src="/cubejs/cube.js"></script>
     <script src="/cubejs/solve.js"></script>
