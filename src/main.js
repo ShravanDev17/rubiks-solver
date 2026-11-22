@@ -43,13 +43,14 @@ const viewer = createViewer(document.getElementById('viewer'), updatePlayback);
 viewer.setSpeed(1100 - Number(speedInput.value) * 100);
 
 function updatePlayback() {
-  const { index, total, playing } = viewer.getState();
+  const { index, total, playing, jumping } = viewer.getState();
+  const locked = playing || jumping;
   stepInfoEl.textContent = `Step ${index} / ${total}`;
   playBtn.textContent = playing ? 'Pause' : 'Play';
-  playBtn.disabled = !playing && index >= total;
-  prevBtn.disabled = playing || index === 0;
-  nextBtn.disabled = playing || index >= total;
-  restartBtn.disabled = playing;
+  playBtn.disabled = jumping || (!playing && index >= total);
+  prevBtn.disabled = locked || index === 0;
+  nextBtn.disabled = locked || index >= total;
+  restartBtn.disabled = locked;
 
   document.querySelectorAll('.move').forEach((el, i) => {
     el.classList.toggle('done', i < index);
@@ -129,7 +130,12 @@ function clearOutput() {
 function showSolution(moves, facelets) {
   if (moves.length === 0) {
     showMessage('The cube is already solved.', 'success');
-    solutionEl.innerHTML = '';
+      solutionEl.innerHTML = `
+    <div class="move-count">${moves.length} moves · tap a move to jump to it</div>
+    <div class="moves">
+      ${moves.map((m, i) => `<button class="move" data-index="${i}">${m}</button>`).join('')}
+    </div>
+  `;
     viewerSection.hidden = true;
     return;
   }
@@ -187,6 +193,11 @@ function solveCube() {
 }
 
 solveBtn.addEventListener('click', solveCube);
+solutionEl.addEventListener('click', (event) => {
+  const button = event.target.closest('.move');
+  if (!button) return;
+  viewer.goTo(Number(button.dataset.index) + 1);
+});
 
 playBtn.addEventListener('click', () => {
   if (viewer.getState().playing) viewer.pause();

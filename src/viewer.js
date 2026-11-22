@@ -34,6 +34,8 @@ const MOVES = {
   B: { axis: 'z', layer: -1, angle: Math.PI / 2 },
 };
 
+const JUMP_SPEED = 160;
+
 function parseMove(notation) {
   const base = MOVES[notation[0]];
   let angle = base.angle;
@@ -48,14 +50,18 @@ function invertMove(notation) {
   return notation + "'";
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function createViewer(container, onChange = () => {}) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
   camera.position.set(5, 4.5, 6.5);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setClearColor(0x0b1220);
+  renderer.setClearColor(0x000000, 0);
   container.appendChild(renderer.domElement);
 
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -75,6 +81,7 @@ export function createViewer(container, onChange = () => {}) {
   let playing = false;
   let speed = 500;
   let token = 0;
+  let jumpTarget = null;
 
   function resize() {
     const width = container.clientWidth;
@@ -125,6 +132,7 @@ export function createViewer(container, onChange = () => {}) {
     const { axis, layer, angle } = parseMove(notation);
     const group = cubies.filter((c) => Math.round(c.position[axis]) === layer);
     group.forEach((c) => pivot.attach(c));
+    const duration = jumpTarget !== null ? Math.min(speed, JUMP_SPEED) : speed;
 
     return new Promise((resolve) => {
       const start = performance.now();
@@ -135,7 +143,7 @@ export function createViewer(container, onChange = () => {}) {
           return;
         }
 
-        const t = Math.min((performance.now() - start) / speed, 1);
+        const t = Math.min((performance.now() - start) / duration, 1);
         const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
         pivot.rotation[axis] = angle * eased;
 
@@ -175,7 +183,7 @@ export function createViewer(container, onChange = () => {}) {
   }
 
   async function play() {
-    if (playing || busy) return;
+    if (playing || busy || jumpTarget !== null) return;
     playing = true;
     onChange();
 
@@ -197,15 +205,45 @@ export function createViewer(container, onChange = () => {}) {
   }
 
   function next() {
-    if (!playing) return step(1);
+    if (!playing && jumpTarget === null) return step(1);
   }
 
   function prev() {
-    if (!playing) return step(-1);
+    if (!playing && jumpTarget === null) return step(-1);
+  }
+
+  async function goTo(target) {
+    target = Math.max(0, Math.min(moves.length, target));
+    if (playing) {
+      playing = false;
+    }
+
+    if (jumpTarget !== null) {
+      jumpTarget = target;
+      return;
+    }
+
+    jumpTarget = target;
+    const myToken = token;
+    onChange();
+
+    while (busy && myToken === token) {
+      await sleep(16);
+    }
+
+    while (myToken === token && index !== jumpTarget) {
+      const ok = await step(jumpTarget > index ? 1 : -1);
+      if (!ok) break;
+    }
+
+    if (myToken === token) {
+      jumpTarget = null;
+      onChange();
+    }
   }
 
   function restart() {
-    if (playing || busy) return;
+    if (playing || busy || jumpTarget !== null) return;
     buildCube();
     index = 0;
     onChange();
@@ -215,6 +253,7 @@ export function createViewer(container, onChange = () => {}) {
     token++;
     busy = false;
     playing = false;
+    jumpTarget = null;
     facelets = newFacelets;
     moves = newMoves;
     index = 0;
@@ -228,7 +267,7 @@ export function createViewer(container, onChange = () => {}) {
   }
 
   function getState() {
-    return { index, total: moves.length, playing };
+    return { index, total: moves.length, playing, jumping: jumpTarget !== null };
   }
 
   function renderLoop() {
@@ -239,5 +278,5 @@ export function createViewer(container, onChange = () => {}) {
 
   renderLoop();
 
-  return { load, play, pause, next, prev, restart, setSpeed, getState };
+  return { load, play, pause, next, prev, goTo, restart, setSpeed, getState };
 }

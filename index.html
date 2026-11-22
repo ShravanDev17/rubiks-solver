@@ -5,12 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rubik's Cube Solver</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧊</text></svg>" />
-  </head> 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
   <body>
     <div id="app">
-      <h1>Rubik's Cube Solver</h1>
-      <p class="hint">Pick a color, then click stickers to paint them. Centers are fixed.<p>
-      <p class="hint">Pick a color, then click stickers to paint them. Centers are fixed.<p>
+      <header>
+        <h1>Rubik's Cube Solver</h1>
+        <p class="byline">dev by Shravan S</p>
+        <p class="hint">Pick a color, then click stickers to paint them. Centers are fixed.</p>
+      </header>
+
       <details id="guide">
         <summary>How to enter your cube</summary>
         <ul>
@@ -20,17 +29,22 @@
           <li>Down (yellow): look from below, with the green side toward the top of your view.</li>
         </ul>
       </details>
-      <div id="palette"></div>
-      <div id="net"></div>
-      <div id="actions">
-        <button id="solve">Solve</button>
-        <button id="scramble">Scramble</button>
-        <button id="demo">Fill solved</button>
-        <button id="reset">Reset</button>
-      </div>
-      <div id="message"></div>
-      <div id="solution"></div>
-      <div id="viewer-section" hidden>
+
+      <section class="card">
+        <div id="palette"></div>
+        <div id="net"></div>
+        <div id="actions">
+          <button id="solve">Solve</button>
+          <button id="scramble">Scramble</button>
+          <button id="demo">Fill solved</button>
+          <button id="reset">Reset</button>
+        </div>
+        <div id="message"></div>
+      </section>
+
+      <div id="solution" class="card"></div>
+
+      <section id="viewer-section" class="card" hidden>
         <div id="viewer"></div>
         <p class="hint">Drag to rotate the view.</p>
         <div id="controls">
@@ -44,8 +58,9 @@
           Speed
           <input id="speed" type="range" min="1" max="10" value="6" />
         </label>
-      </div>
+      </section>
     </div>
+
     <script src="/cubejs/cube.js"></script>
     <script src="/cubejs/solve.js"></script>
     <script type="module" src="/src/main.js"></script>
