@@ -55,3 +55,14 @@ export function toFaceletString(cube) {
     .map((color) => colorToFace[color])
     .join('');
 }
+
+export function fromFaceletString(str) {
+  const cube = {};
+  FACES.forEach((face, i) => {
+    cube[face] = str
+      .slice(i * 9, i * 9 + 9)
+      .split('')
+      .map((letter) => FACE_COLORS[letter]);
+  });
+  return cube;
+}

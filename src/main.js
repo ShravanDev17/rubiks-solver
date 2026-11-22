@@ -1,4 +1,6 @@
 import './style.css';
+
+const Cube = window.Cube;
 import {
   FACES,
   FACE_COLORS,
@@ -6,6 +8,7 @@ import {
   createSolvedCube,
   validateCube,
   toFaceletString,
+  fromFaceletString,
 } from './cube.js';
 
 const COLOR_HEX = {
@@ -23,6 +26,8 @@ let selectedColor = 'white';
 const paletteEl = document.getElementById('palette');
 const netEl = document.getElementById('net');
 const messageEl = document.getElementById('message');
+const solutionEl = document.getElementById('solution');
+const solveBtn = document.getElementById('solve');
 
 function countColors() {
   const counts = {};
@@ -69,6 +74,7 @@ function renderNet() {
       } else {
         sticker.addEventListener('click', () => {
           cube[face][index] = selectedColor;
+          clearOutput();
           render();
         });
       }
@@ -85,30 +91,86 @@ function showMessage(text, type) {
   messageEl.className = type;
 }
 
+function clearOutput() {
+  showMessage('', '');
+  solutionEl.innerHTML = '';
+}
+
+function showSolution(moves) {
+  if (moves.length === 0) {
+    showMessage('The cube is already solved.', 'success');
+    solutionEl.innerHTML = '';
+    return;
+  }
+
+  showMessage('Solution found!', 'success');
+  solutionEl.innerHTML = `
+    <div class="move-count">${moves.length} moves</div>
+    <div class="moves">
+      ${moves.map((m) => `<span class="move">${m}</span>`).join('')}
+    </div>
+  `;
+}
+
 function render() {
   renderPalette();
   renderNet();
 }
 
-document.getElementById('check').addEventListener('click', () => {
+function solveCube() {
   const result = validateCube(cube);
-  if (result.valid) {
-    showMessage(`Cube looks good: ${toFaceletString(cube)}`, 'success');
-  } else {
+  if (!result.valid) {
     showMessage(result.errors.join(' '), 'error');
+    solutionEl.innerHTML = '';
+    return;
   }
-});
 
-document.getElementById('reset').addEventListener('click', () => {
-  cube = createEmptyCube();
-  showMessage('', '');
+  try {
+    const solver = Cube.fromString(toFaceletString(cube));
+    const solution = solver.solve();
+
+    if (solution === null || solution === undefined) {
+      showMessage('No solution found. Please recheck your colors.', 'error');
+      solutionEl.innerHTML = '';
+      return;
+    }
+
+    const moves = solution.trim() === '' ? [] : solution.trim().split(/\s+/);
+    showSolution(moves);
+  } catch (error) {
+    console.error(error);
+    showMessage('This cube is not solvable. Please recheck your colors.', 'error');
+    solutionEl.innerHTML = '';
+  }
+}
+
+solveBtn.addEventListener('click', solveCube);
+
+document.getElementById('scramble').addEventListener('click', () => {
+  cube = fromFaceletString(Cube.random().asString());
+  clearOutput();
   render();
 });
 
 document.getElementById('demo').addEventListener('click', () => {
   cube = createSolvedCube();
-  showMessage('', '');
+  clearOutput();
   render();
 });
+
+document.getElementById('reset').addEventListener('click', () => {
+  cube = createEmptyCube();
+  clearOutput();
+  render();
+});
+
+solveBtn.disabled = true;
+showMessage('Loading solver, please wait a few seconds...', '');
+
+setTimeout(() => {
+  Cube.initSolver();
+  solveBtn.disabled = false;
+  showMessage('Solver ready.', 'success');
+}, 50);
 
 render();

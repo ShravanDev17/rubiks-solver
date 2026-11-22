@@ -139,3 +139,38 @@ h1 {
 #message.success {
   color: #4ade80;
 }
+
+#actions {
+  flex-wrap: wrap;
+}
+
+#actions button:disabled {
+  background: #4b5563;
+  cursor: not-allowed;
+}
+
+#solution {
+  margin-top: 16px;
+}
+
+.move-count {
+  color: #9ca3af;
+  margin-bottom: 10px;
+}
+
+.moves {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.move {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 18px;
+  font-weight: 700;
+}
