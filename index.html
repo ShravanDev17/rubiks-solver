@@ -2,12 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>rubiks-solver</title>
+    <title>Rubik's Cube Solver</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <h1>Rubik's Cube Solver</h1>
+      <p class="hint">Pick a color, then click stickers to paint them. Centers are fixed.</p>
+      <div id="palette"></div>
+      <div id="net"></div>
+      <div id="actions">
+        <button id="check">Check cube</button>
+        <button id="reset">Reset</button>
+        <button id="demo">Fill solved</button>
+      </div>
+      <div id="message"></div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
