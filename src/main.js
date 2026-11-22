@@ -196,7 +196,10 @@ solveBtn.addEventListener('click', solveCube);
 solutionEl.addEventListener('click', (event) => {
   const button = event.target.closest('.move');
   if (!button) return;
-  viewer.goTo(Number(button.dataset.index) + 1);
+  const buttons = Array.from(solutionEl.querySelectorAll('.move'));
+  const position = buttons.indexOf(button);
+  if (position === -1) return;
+  viewer.goTo(position + 1);
 });
 
 playBtn.addEventListener('click', () => {

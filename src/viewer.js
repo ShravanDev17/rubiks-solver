@@ -213,6 +213,7 @@ export function createViewer(container, onChange = () => {}) {
   }
 
   async function goTo(target) {
+    if (!Number.isInteger(target)) return;
     target = Math.max(0, Math.min(moves.length, target));
     if (playing) {
       playing = false;
