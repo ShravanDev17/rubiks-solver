@@ -245,3 +245,40 @@ h1 {
   border-color: #38bdf8;
   background: #0c4a6e;
 }
+
+#guide {
+  max-width: 480px;
+  margin: 0 auto 8px;
+  text-align: left;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+#guide summary {
+  cursor: pointer;
+  text-align: center;
+  color: #38bdf8;
+}
+
+#guide ul {
+  padding-left: 20px;
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 24px;
+  }
+
+  .swatch {
+    width: 52px;
+    height: 52px;
+  }
+
+  #net {
+    gap: 4px;
+  }
+
+  #viewer {
+    height: 300px;
+  }
+}

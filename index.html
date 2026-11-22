@@ -4,11 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rubik's Cube Solver</title>
-  </head>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧊</text></svg>" />
+  </head> 
   <body>
     <div id="app">
       <h1>Rubik's Cube Solver</h1>
-      <p class="hint">Pick a color, then click stickers to paint them. Centers are fixed.</p>
+      <p class="hint">Pick a color, then click stickers to paint them. Centers are fixed.<p>
+      <p class="hint">Pick a color, then click stickers to paint them. Centers are fixed.<p>
+      <details id="guide">
+        <summary>How to enter your cube</summary>
+        <ul>
+          <li>Hold the cube with the white center on top and the green center facing you.</li>
+          <li>Front, Right, Back, Left: look straight at each face with the white side up.</li>
+          <li>Up (white): look from above, with the green side toward the bottom of your view.</li>
+          <li>Down (yellow): look from below, with the green side toward the top of your view.</li>
+        </ul>
+      </details>
       <div id="palette"></div>
       <div id="net"></div>
       <div id="actions">

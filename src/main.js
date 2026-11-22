@@ -1,5 +1,6 @@
 import './style.css';
 import { createViewer } from './viewer.js';
+import { verifyFacelets } from './verify.js';
 import {
   FACES,
   FACE_COLORS,
@@ -158,8 +159,15 @@ function solveCube() {
     return;
   }
 
+  const facelets = toFaceletString(cube);
+  const problems = verifyFacelets(facelets);
+  if (problems.length > 0) {
+    clearOutput();
+    showMessage(problems.join(' '), 'error');
+    return;
+  }
+
   try {
-    const facelets = toFaceletString(cube);
     const solver = Cube.fromString(facelets);
     const solution = solver.solve();
 
