@@ -27,7 +27,15 @@
       <section class="card">
         <div id="palette"></div>
         <div id="net"></div>
+        <div id="mode" role="group" aria-label="Solving method">
+          <button data-mode="fast" class="active">Fast · ~20 moves</button>
+          <button data-mode="beginner">Beginner · step by step</button>
+        </div>
         <div id="actions">
+        <div id="mode" role="group" aria-label="Solving method">
+          <button data-mode="fast" class="active">Fast · ~20 moves</button>
+          <button data-mode="beginner">Beginner · step by step</button>
+        </div>
           <button id="solve">Solve</button>
           <button id="scramble">Scramble</button>
           <button id="demo">Fill solved</button>
@@ -39,6 +47,7 @@
       <div id="solution" class="card"></div>
 
       <section id="viewer-section" class="card" hidden>
+        <div id="stage-info" hidden></div>
         <div id="viewer"></div>
         <p class="hint">Drag to rotate the view.</p>
         <div id="controls">

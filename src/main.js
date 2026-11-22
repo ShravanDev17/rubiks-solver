@@ -8,6 +8,7 @@ import '@fontsource/inter/700.css';
 import './style.css';
 import { createViewer } from './viewer.js';
 import { verifyFacelets } from './verify.js';
+import { solveBeginner } from './beginner.js';
 import {
   FACES,
   FACE_COLORS,
@@ -31,14 +32,19 @@ const COLOR_HEX = {
 
 let cube = createEmptyCube();
 let selectedColor = 'white';
+let mode = 'fast';
+let solverReady = false;
+let currentStages = [];
 
 const paletteEl = document.getElementById('palette');
 const netEl = document.getElementById('net');
 const messageEl = document.getElementById('message');
 const solutionEl = document.getElementById('solution');
 const solveBtn = document.getElementById('solve');
+const modeButtons = document.querySelectorAll('#mode button');
 
 const viewerSection = document.getElementById('viewer-section');
+const stageInfoEl = document.getElementById('stage-info');
 const playBtn = document.getElementById('play');
 const prevBtn = document.getElementById('prev');
 const nextBtn = document.getElementById('next');
@@ -48,6 +54,33 @@ const stepInfoEl = document.getElementById('step-info');
 
 const viewer = createViewer(document.getElementById('viewer'), updatePlayback);
 viewer.setSpeed(1100 - Number(speedInput.value) * 100);
+
+function updateStageInfo(index, total) {
+  const grouped = currentStages.length > 1;
+  stageInfoEl.hidden = !grouped;
+  if (!grouped) return;
+
+  let start = 0;
+  let activeIndex = -1;
+  currentStages.forEach((stage, i) => {
+    const end = start + stage.moves.length;
+    if (activeIndex === -1 && stage.moves.length > 0 && index >= start && index < end) {
+      activeIndex = i;
+    }
+    start = end;
+  });
+
+  if (index >= total) {
+    stageInfoEl.innerHTML = '<strong>Solved!</strong><span>The cube is complete.</span>';
+  } else if (activeIndex >= 0) {
+    const stage = currentStages[activeIndex];
+    stageInfoEl.innerHTML = `<strong>Stage ${activeIndex + 1} of ${currentStages.length} · ${stage.title}</strong><span>${stage.description}</span>`;
+  }
+
+  document.querySelectorAll('.stage').forEach((el, i) => {
+    el.classList.toggle('active', i === activeIndex);
+  });
+}
 
 function updatePlayback() {
   const { index, total, playing, jumping } = viewer.getState();
@@ -63,6 +96,8 @@ function updatePlayback() {
     el.classList.toggle('done', i < index);
     el.classList.toggle('upcoming', i === index);
   });
+
+  updateStageInfo(index, total);
 }
 
 function countColors() {
@@ -129,30 +164,64 @@ function showMessage(text, type) {
 
 function clearOutput() {
   viewer.pause();
+  currentStages = [];
   showMessage('', '');
   solutionEl.innerHTML = '';
   viewerSection.hidden = true;
 }
 
-function showSolution(moves, facelets) {
+function updateSolveButton() {
+  solveBtn.disabled = mode === 'fast' && !solverReady;
+}
+
+function setMode(newMode) {
+  mode = newMode;
+  modeButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.mode === newMode);
+  });
+  clearOutput();
+  updateSolveButton();
+}
+
+function showSolution(stages, facelets) {
+  const moves = stages.flatMap((stage) => stage.moves);
+
   if (moves.length === 0) {
     showMessage('The cube is already solved.', 'success');
-      solutionEl.innerHTML = `
-    <div class="move-count">${moves.length} moves · tap a move to jump to it</div>
-    <div class="moves">
-      ${moves.map((m, i) => `<button class="move" data-index="${i}">${m}</button>`).join('')}
-    </div>
-  `;
+    solutionEl.innerHTML = '';
     viewerSection.hidden = true;
     return;
   }
 
+  currentStages = stages;
+  const grouped = stages.length > 1;
+
   showMessage('Solution found!', 'success');
+
+  const blocks = stages
+    .map((stage, i) => {
+      const buttons = stage.moves.map((m) => `<button class="move">${m}</button>`).join('');
+      if (!grouped) return `<div class="moves">${buttons}</div>`;
+
+      const count = stage.moves.length ? `${stage.moves.length} moves` : 'already done ✓';
+      return `
+        <div class="stage">
+          <div class="stage-head">
+            <span class="stage-num">${i + 1}</span>
+            <div class="stage-text">
+              <div class="stage-title">${stage.title}</div>
+              <div class="stage-desc">${stage.description}</div>
+            </div>
+            <span class="stage-count">${count}</span>
+          </div>
+          ${stage.moves.length ? `<div class="moves">${buttons}</div>` : ''}
+        </div>`;
+    })
+    .join('');
+
   solutionEl.innerHTML = `
-    <div class="move-count">${moves.length} moves</div>
-    <div class="moves">
-      ${moves.map((m) => `<span class="move">${m}</span>`).join('')}
-    </div>
+    <div class="move-count">${moves.length} moves · tap a move to jump to it</div>
+    ${blocks}
   `;
 
   viewerSection.hidden = false;
@@ -181,6 +250,11 @@ function solveCube() {
   }
 
   try {
+    if (mode === 'beginner') {
+      showSolution(solveBeginner(facelets), facelets);
+      return;
+    }
+
     const solver = Cube.fromString(facelets);
     const solution = solver.solve();
 
@@ -191,7 +265,7 @@ function solveCube() {
     }
 
     const moves = solution.trim() === '' ? [] : solution.trim().split(/\s+/);
-    showSolution(moves, facelets);
+    showSolution([{ id: 'fast', title: '', description: '', moves }], facelets);
   } catch (error) {
     console.error(error);
     clearOutput();
@@ -200,6 +274,11 @@ function solveCube() {
 }
 
 solveBtn.addEventListener('click', solveCube);
+
+modeButtons.forEach((button) => {
+  button.addEventListener('click', () => setMode(button.dataset.mode));
+});
+
 solutionEl.addEventListener('click', (event) => {
   const button = event.target.closest('.move');
   if (!button) return;
@@ -240,12 +319,13 @@ document.getElementById('reset').addEventListener('click', () => {
   render();
 });
 
-solveBtn.disabled = true;
+updateSolveButton();
 showMessage('Loading solver, please wait a few seconds...', '');
 
 setTimeout(() => {
   Cube.initSolver();
-  solveBtn.disabled = false;
+  solverReady = true;
+  updateSolveButton();
   showMessage('Solver ready.', 'success');
 }, 50);
 
